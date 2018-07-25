@@ -23,8 +23,7 @@ export default class TaskController implements IPaginatedController<Task> {
     }
 
     public async getModelList(page: number): Promise<Page<Task>> {
-        const tasks = await Task.query().page(page, this.LIST_PAGINATION);
-        return Promise.resolve(tasks);
+        return await Task.query().page(page, this.LIST_PAGINATION);
     }
 
     public getPreviousListPage(page: number): string {
