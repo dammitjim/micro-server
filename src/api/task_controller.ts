@@ -1,8 +1,16 @@
 import { transaction } from "objection";
 import * as Router from "koa-router";
+import { Page } from "objection";
 import Task from "../models/task";
 
-export default class TaskController {
+interface IPaginatedController<T> {
+    router: Router;
+    getPreviousListPage(page: number): string;
+    getNextListPage(page: number): string;
+    getModelList(page: number): Promise<Page<T>>;
+}
+
+export default class TaskController implements IPaginatedController<Task> {
     readonly LIST_PAGINATION = 100;
     router: Router;
 
@@ -14,26 +22,32 @@ export default class TaskController {
         return "Some stringerinos";
     }
 
-    /**
-     * Task list action
-     * @param ctx incoming router context
-     */
-    public async index(ctx: Router.IRouterContext) {
-        let pageNo = 0;
-        if (ctx.query.page) {
-            pageNo = Math.max(ctx.query.page - 1, 0);
-        }
+    public async getModelList(page: number): Promise<Page<Task>> {
+        const tasks = await Task.query().page(page, this.LIST_PAGINATION);
+        return Promise.resolve(tasks);
+    }
 
-        const tasks = await Task.query().page(pageNo, this.LIST_PAGINATION);
-
+    public getPreviousListPage(page: number): string {
         let prevUrl = null;
-        if (pageNo > 0) {
-            prevUrl = `${this.router.url("task_list", {})}?page=${pageNo - 1}`;
+        if (page > 1) {
+            prevUrl = `${this.router.url("task_list", {})}?page=${page - 1}`;
         }
+        return prevUrl;
+    }
 
+    public getNextListPage(page: number): string {
+        let pageNo = 0;
+        if (page > 0) {
+            pageNo = Math.max(page, 0);
+        }
+        return `${this.router.url("task_list", {})}?page=${pageNo + 1}`;
+    }
+
+    public async index(ctx: Router.IRouterContext) {
+        const tasks = await this.getModelList(ctx.query.page);
         ctx.body = {
-            prev: prevUrl,
-            next: `${this.router.url("task_list", {})}?page=${pageNo + 2}`,
+            prev: this.getPreviousListPage(ctx.query.page),
+            next: this.getNextListPage(ctx.query.page),
             total: tasks.total,
             data: tasks.results
         };
