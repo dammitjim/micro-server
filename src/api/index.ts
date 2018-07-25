@@ -10,6 +10,7 @@ export function init(server: Koa) {
 
     const controller = new TaskController(router);
 
+    router.get("root", "/", async ctx => (ctx.body = { message: "Welcome" }));
     router.get("task_list", "/tasks", async ctx => await controller.index(ctx));
     router.post(
         "task_create",

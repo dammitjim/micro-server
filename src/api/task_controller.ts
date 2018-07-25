@@ -11,7 +11,7 @@ export default class TaskController {
     }
 
     public static someString() {
-        return "Some string";
+        return "Some stringerinos";
     }
 
     /**
