@@ -1,0 +1,50 @@
+{
+  "name": "macro-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "watch-server": "nodemon --watch 'src/**/*' -e ts,tsx --exec 'ts-node' ./src/server.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "knex": "^0.15.2",
+    "koa": "^2.5.2",
+    "koa-logger": "^3.2.0",
+    "koa-router": "^7.4.0",
+    "objection": "^1.2.0",
+    "pg": "^7.4.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.0",
+    "@types/knex": "^0.14.17",
+    "@types/koa": "^2.0.46",
+    "@types/koa-logger": "^3.1.0",
+    "@types/koa-router": "^7.0.30",
+    "jest": "^23.4.1",
+    "nodemon": "^1.18.3",
+    "supertest": "^3.1.0",
+    "ts-jest": "^23.0.1",
+    "ts-node": "^7.0.0",
+    "typescript": "^2.9.2"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    },
+    "globals": {
+      "ts-jest": {
+        "tsConfigFile": "tsconfig.json"
+      }
+    },
+    "testMatch": [
+      "**/__tests__/*.+(ts|tsx|js)"
+    ]
+}
+}
