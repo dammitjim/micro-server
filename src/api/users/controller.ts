@@ -3,7 +3,7 @@ import { transaction } from "objection";
 import * as Router from "koa-router";
 import * as JWT from "jsonwebtoken";
 
-import User from "../models/user";
+import User from "../../models/user";
 
 interface UserCreateRequestBody {
     username: string;

@@ -1,7 +1,7 @@
 import { transaction } from "objection";
 import * as Router from "koa-router";
 import { Page } from "objection";
-import Task from "../models/task";
+import Task from "../../models/task";
 
 interface IPaginatedController<T> {
     router: Router;
