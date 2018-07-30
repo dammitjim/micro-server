@@ -1,50 +1,56 @@
 import * as Koa from "koa";
 import * as Router from "koa-router";
+import * as JWTMiddleware from "koa-jwt";
 
 import TaskController from "./task_controller";
 import UserController from "./user_controller";
 
 export function init(server: Koa) {
-    const router = new Router({
-        prefix: "/api/v1"
+    const taskRouter = new Router({
+        prefix: "/api/v1/tasks"
     });
 
-    const taskController = new TaskController(router);
+    const taskController = new TaskController(taskRouter);
+    taskRouter.use(JWTMiddleware({ secret: "super secret" }));
 
-    router.get("root", "/", async ctx => (ctx.body = { message: "Welcome" }));
-    router.get(
+    taskRouter.get(
         "task_list",
-        "/tasks",
+        "/",
         async ctx => await taskController.index(ctx)
     );
-    router.post(
+    taskRouter.post(
         "task_create",
-        "/tasks",
+        "/",
         async ctx => await taskController.create(ctx)
     );
-    router.get(
+    taskRouter.get(
         "task_detail",
-        "/tasks/:id",
+        "/:id",
         async ctx => await taskController.detail(ctx)
     );
-    router.delete("task_delete", "/tasks/:id", async ctx =>
+    taskRouter.delete("task_delete", "/:id", async ctx =>
         taskController.delete(ctx)
     );
-    router.put("task_update", "/tasks/:id", async ctx =>
+    taskRouter.put("task_update", "/:id", async ctx =>
         taskController.update(ctx)
     );
 
-    const userController = new UserController(router);
-    router.post(
+    server.use(taskRouter.routes());
+
+    const userRouter = new Router({
+        prefix: "/api/v1/users"
+    });
+    const userController = new UserController(userRouter);
+    userRouter.post(
         "user_create",
-        "/users",
+        "/",
         async ctx => await userController.create(ctx)
     );
-    router.post(
+    userRouter.post(
         "user_login",
-        "/users/login",
+        "/login",
         async ctx => await userController.login(ctx)
     );
 
-    server.use(router.routes());
+    server.use(userRouter.routes());
 }

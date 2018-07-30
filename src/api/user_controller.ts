@@ -1,6 +1,7 @@
 import * as Argon2 from "argon2";
 import { transaction } from "objection";
 import * as Router from "koa-router";
+import * as JWT from "jsonwebtoken";
 
 import User from "../models/user";
 
@@ -56,11 +57,15 @@ export default class UserController {
         };
     }
 
+    LOGIN_FAILED_MESSAGE = "The username and password do not match.";
+
     public async login(ctx: Router.IRouterContext) {
         const body = ctx.request.body as UserLoginRequestBody;
         const users = await User.query().where("username", "=", body.username);
         if (users.length == 0) {
-            // TODO: login failed message
+            ctx.body = {
+                message: this.LOGIN_FAILED_MESSAGE
+            };
             ctx.status = 400;
             return;
         }
@@ -68,19 +73,21 @@ export default class UserController {
         const user = users[0];
         try {
             if (!(await Argon2.verify(user.password, body.password))) {
-                // TODO: login failed message
                 ctx.status = 400;
+                ctx.body = {
+                    message: this.LOGIN_FAILED_MESSAGE
+                };
                 return;
             }
         } catch (err) {
-            // TODO: handle
             ctx.status = 500;
             return;
         }
 
-        // TODO: JWT generate here
         ctx.body = {
-            message: "You have successfully logged in"
+            data: {
+                token: JWT.sign({ id: user.id }, "super secret")
+            }
         };
     }
 }
