@@ -18,7 +18,7 @@ export class ListController<T> {
         this.routeName = routeName;
     }
 
-    public getResponseBody(
+    public getListBody(
         items: Page<T>,
         page: number
     ): ListControllerResponseBody<T> {

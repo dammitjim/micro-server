@@ -2,6 +2,7 @@ import { transaction } from "objection";
 import * as Router from "koa-router";
 
 import { CreateTaskRequestBody, UpdateTaskRequestBody } from "./interfaces";
+import { NotFound } from "../common/messages";
 import { ListController } from "../common/controller";
 import { JWTState } from "../common/auth";
 import Task from "../../models/task";
@@ -18,7 +19,7 @@ export default class TaskController extends ListController<Task> {
             .where("user_id", "=", state.id)
             .page(ctx.query.page, this.LIST_PAGINATION);
 
-        ctx.body = this.getResponseBody(tasks, ctx.query.page);
+        ctx.body = this.getListBody(tasks, ctx.query.page);
     }
 
     /**
@@ -35,10 +36,7 @@ export default class TaskController extends ListController<Task> {
 
         if (!task) {
             ctx.status = 404;
-            ctx.body = {
-                message: "Not Found"
-            };
-
+            ctx.body = NotFound;
             return;
         }
 
@@ -74,9 +72,7 @@ export default class TaskController extends ListController<Task> {
         if (ctx.params.id !== body.id) {
             // TODO: raise exception
             ctx.status = 404;
-            ctx.body = {
-                message: "Not Found"
-            };
+            ctx.body = NotFound;
             return;
         }
 

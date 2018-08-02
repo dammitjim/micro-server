@@ -57,7 +57,7 @@ export default class UserController {
         };
     }
 
-    LOGIN_FAILED_MESSAGE = "The username and password do not match.";
+    readonly LOGIN_FAILED_MESSAGE = "The username and password do not match.";
 
     public async login(ctx: Router.IRouterContext) {
         const body = ctx.request.body as UserLoginRequestBody;
