@@ -1,7 +1,7 @@
 import { transaction } from "objection";
 import * as Router from "koa-router";
 
-import { CreateTaskRequestBody } from "./interfaces";
+import { CreateTaskRequestBody, UpdateTaskRequestBody } from "./interfaces";
 import { ListController } from "../common/controller";
 import { JWTState } from "../common/auth";
 import Task from "../../models/task";
@@ -14,8 +14,10 @@ export default class TaskController extends ListController<Task> {
     public async index(ctx: Router.IRouterContext) {
         const state = ctx.state.user as JWTState;
         const tasks = await Task.query()
+            .select("id", "title", "text", "completed", "completedAt")
             .where("user_id", "=", state.id)
             .page(ctx.query.page, this.LIST_PAGINATION);
+
         ctx.body = this.getResponseBody(tasks, ctx.query.page);
     }
 
@@ -26,9 +28,19 @@ export default class TaskController extends ListController<Task> {
     public async detail(ctx: Router.IRouterContext) {
         const state = ctx.state.user as JWTState;
         const task = await Task.query()
+            .select("id", "title", "text", "completed", "completedAt")
             .where("id", "=", ctx.params.id)
             .where("user_id", "=", state.id)
             .first();
+
+        if (!task) {
+            ctx.status = 404;
+            ctx.body = {
+                message: "Not Found"
+            };
+
+            return;
+        }
 
         ctx.body = {
             data: task
@@ -42,26 +54,54 @@ export default class TaskController extends ListController<Task> {
         const insertedGraph = await transaction(Task.knex(), trx => {
             const insert = {
                 user_id: state.id,
+                // TODO: utc date here
                 createdAt: new Date(),
                 ...body
             };
             return Task.query(trx).insertGraph(insert);
         });
 
+        ctx.status = 201;
         ctx.body = {
             data: insertedGraph
         };
     }
 
-    public update(ctx: Router.IRouterContext): void {
+    public async update(ctx: Router.IRouterContext) {
+        const state = ctx.state.user as JWTState;
+        const body = ctx.request.body as UpdateTaskRequestBody;
+
+        if (ctx.params.id !== body.id) {
+            // TODO: raise exception
+            ctx.status = 404;
+            ctx.body = {
+                message: "Not Found"
+            };
+            return;
+        }
+
+        const task = await Task.query()
+            .where("id", "=", ctx.params.id)
+            .where("user_id", "=", state.id)
+            .first()
+            .update(body)
+            .returning(["id", "title", "text", "completed", "completedAt"]);
+
         ctx.body = {
-            message: "This is the tasks update API endpoint"
+            data: task
         };
     }
 
-    public delete(ctx: Router.IRouterContext): void {
+    public async delete(ctx: Router.IRouterContext) {
+        const state = ctx.state.user as JWTState;
+        await Task.query()
+            .where("id", "=", ctx.params.id)
+            .where("user_id", "=", state.id)
+            .first()
+            .delete();
+
         ctx.body = {
-            message: "This is the tasks delete API endpoint"
+            message: "Task has been deleted."
         };
     }
 }

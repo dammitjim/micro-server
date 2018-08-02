@@ -3,3 +3,7 @@ export interface CreateTaskRequestBody {
     text: string;
     completed: boolean;
 }
+
+export interface UpdateTaskRequestBody extends CreateTaskRequestBody {
+    id: number;
+}
