@@ -1,55 +1,22 @@
 import { transaction } from "objection";
 import * as Router from "koa-router";
-import { Page } from "objection";
+
+import { CreateTaskRequestBody } from "./interfaces";
+import { ListController } from "../common/controller";
+import { JWTState } from "../common/auth";
 import Task from "../../models/task";
 
-interface IPaginatedController<T> {
-    router: Router;
-    getPreviousListPage(page: number): string;
-    getNextListPage(page: number): string;
-    getModelList(page: number): Promise<Page<T>>;
-}
-
-export default class TaskController implements IPaginatedController<Task> {
-    readonly LIST_PAGINATION = 100;
-    router: Router;
-
+export default class TaskController extends ListController<Task> {
     constructor(router: Router) {
-        this.router = router;
-    }
-
-    public static someString() {
-        return "Some stringerinos";
-    }
-
-    public async getModelList(page: number): Promise<Page<Task>> {
-        return await Task.query().page(page, this.LIST_PAGINATION);
-    }
-
-    public getPreviousListPage(page: number): string {
-        let prevUrl = null;
-        if (page > 1) {
-            prevUrl = `${this.router.url("task_list", {})}?page=${page - 1}`;
-        }
-        return prevUrl;
-    }
-
-    public getNextListPage(page: number): string {
-        let pageNo = 0;
-        if (page > 0) {
-            pageNo = Math.max(page, 0);
-        }
-        return `${this.router.url("task_list", {})}?page=${pageNo + 1}`;
+        super(router, "task_list");
     }
 
     public async index(ctx: Router.IRouterContext) {
-        const tasks = await this.getModelList(ctx.query.page);
-        ctx.body = {
-            prev: this.getPreviousListPage(ctx.query.page),
-            next: this.getNextListPage(ctx.query.page),
-            total: tasks.total,
-            data: tasks.results
-        };
+        const state = ctx.state.user as JWTState;
+        const tasks = await Task.query()
+            .where("user_id", "=", state.id)
+            .page(ctx.query.page, this.LIST_PAGINATION);
+        ctx.body = this.getResponseBody(tasks, ctx.query.page);
     }
 
     /**
@@ -57,24 +24,30 @@ export default class TaskController implements IPaginatedController<Task> {
      * @param ctx incoming router context
      */
     public async detail(ctx: Router.IRouterContext) {
-        const tasks = await Task.query().where("id", "=", ctx.params.id);
-        if (tasks.length == 0) {
-            // TODO: handle
-        }
+        const state = ctx.state.user as JWTState;
+        const task = await Task.query()
+            .where("id", "=", ctx.params.id)
+            .where("user_id", "=", state.id)
+            .first();
+
         ctx.body = {
-            data: tasks[0]
+            data: task
         };
     }
 
     public async create(ctx: Router.IRouterContext) {
+        const state = ctx.state.user as JWTState;
+        const body = ctx.request.body as CreateTaskRequestBody;
+
         const insertedGraph = await transaction(Task.knex(), trx => {
-            return Task.query(trx).insertGraph({
-                title: "This is only a test",
-                text: "This is my text",
+            const insert = {
+                user_id: state.id,
                 createdAt: new Date(),
-                completed: false
-            });
+                ...body
+            };
+            return Task.query(trx).insertGraph(insert);
         });
+
         ctx.body = {
             data: insertedGraph
         };
