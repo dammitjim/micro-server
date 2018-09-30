@@ -1,3 +1,3 @@
-export interface JWTState {
+export interface IJWTState {
     id: number;
 }

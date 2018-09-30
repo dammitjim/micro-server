@@ -1,22 +1,24 @@
 import * as Argon2 from "argon2";
-import { transaction } from "objection";
-import * as Router from "koa-router";
 import * as JWT from "jsonwebtoken";
+import * as Router from "koa-router";
+import { transaction } from "objection";
 
 import User from "../../models/user";
 
-interface UserCreateRequestBody {
+interface IUserCreateRequestBody {
     username: string;
     password: string;
 }
 
-interface UserLoginRequestBody {
+interface IUserLoginRequestBody {
     username: string;
     password: string;
 }
 
 export default class UserController {
-    router: Router;
+    public router: Router;
+
+    public readonly LOGIN_FAILED_MESSAGE = "The username and password do not match.";
 
     constructor(router: Router) {
         this.router = router;
@@ -24,12 +26,11 @@ export default class UserController {
 
     public async create(ctx: Router.IRouterContext) {
         // TODO: check if i need to sanitize this or if knex / objection does it for me
-        const body = ctx.request.body as UserCreateRequestBody;
+        const body = ctx.request.body as IUserCreateRequestBody;
 
         const user = await User.query().where("username", "=", body.username);
         if (user.length > 0) {
             // TODO: throw an error?
-            console.log("user already exists");
             ctx.status = 400;
             return;
         }
@@ -43,28 +44,26 @@ export default class UserController {
             return;
         }
 
-        await transaction(User.knex(), trx => {
+        await transaction(User.knex(), (trx) => {
             return User.query(trx).insertGraph({
-                username: body.username,
+                createdAt: new Date(),
                 password: hashedPassword,
-                createdAt: new Date()
+                username: body.username,
             });
         });
 
         ctx.status = 201;
         ctx.body = {
-            message: "You have been successfully registered"
+            message: "You have been successfully registered",
         };
     }
 
-    readonly LOGIN_FAILED_MESSAGE = "The username and password do not match.";
-
     public async login(ctx: Router.IRouterContext) {
-        const body = ctx.request.body as UserLoginRequestBody;
+        const body = ctx.request.body as IUserLoginRequestBody;
         const users = await User.query().where("username", "=", body.username);
-        if (users.length == 0) {
+        if (users.length === 0) {
             ctx.body = {
-                message: this.LOGIN_FAILED_MESSAGE
+                message: this.LOGIN_FAILED_MESSAGE,
             };
             ctx.status = 400;
             return;
@@ -75,7 +74,7 @@ export default class UserController {
             if (!(await Argon2.verify(user.password, body.password))) {
                 ctx.status = 400;
                 ctx.body = {
-                    message: this.LOGIN_FAILED_MESSAGE
+                    message: this.LOGIN_FAILED_MESSAGE,
                 };
                 return;
             }
@@ -86,8 +85,8 @@ export default class UserController {
 
         ctx.body = {
             data: {
-                token: JWT.sign({ id: user.id }, "super secret")
-            }
+                token: JWT.sign({ id: user.id }, "super secret"),
+            },
         };
     }
 }

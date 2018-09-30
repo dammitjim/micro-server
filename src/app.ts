@@ -1,6 +1,6 @@
 import * as Koa from "koa";
-import * as Logger from "koa-logger";
 import * as BodyParser from "koa-bodyparser";
+import * as Logger from "koa-logger";
 
 import * as api from "./api";
 

@@ -1,7 +1,7 @@
 import * as Router from "koa-router";
 import { Page } from "objection";
 
-interface ListControllerResponseBody<T> {
+interface IListControllerResponseBody<T> {
     count: number;
     next: string;
     prev: string;
@@ -9,9 +9,9 @@ interface ListControllerResponseBody<T> {
 }
 
 export class ListController<T> {
-    readonly LIST_PAGINATION = 100;
-    router: Router;
-    routeName: string;
+    public readonly LIST_PAGINATION = 100;
+    public router: Router;
+    public routeName: string;
 
     constructor(router: Router, routeName: string) {
         this.router = router;
@@ -20,13 +20,13 @@ export class ListController<T> {
 
     public getListBody(
         items: Page<T>,
-        page: number
-    ): ListControllerResponseBody<T> {
+        page: number,
+    ): IListControllerResponseBody<T> {
         return {
             count: items.total,
+            data: items.results,
             next: this.getNextPage(page),
             prev: this.getPreviousPage(page),
-            data: items.results
         };
     }
 

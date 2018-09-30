@@ -1,3 +1,3 @@
 export const NotFound = {
-    message: "Not Found"
+    message: "Not Found",
 };

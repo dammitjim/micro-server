@@ -1,11 +1,11 @@
-import { transaction } from "objection";
 import * as Router from "koa-router";
+import { transaction } from "objection";
 
-import { CreateTaskRequestBody, UpdateTaskRequestBody } from "./interfaces";
-import { NotFound } from "../common/messages";
-import { ListController } from "../common/controller";
-import { JWTState } from "../common/auth";
 import Task from "../../models/task";
+import { IJWTState } from "../common/auth";
+import { ListController } from "../common/controller";
+import { NotFound } from "../common/messages";
+import { ICreateTaskRequestBody, IUpdateTaskRequestBody } from "./interfaces";
 
 export default class TaskController extends ListController<Task> {
     constructor(router: Router) {
@@ -13,7 +13,7 @@ export default class TaskController extends ListController<Task> {
     }
 
     public async index(ctx: Router.IRouterContext) {
-        const state = ctx.state.user as JWTState;
+        const state = ctx.state.user as IJWTState;
         const tasks = await Task.query()
             .select("id", "title", "text", "completed", "completedAt")
             .where("user_id", "=", state.id)
@@ -27,7 +27,7 @@ export default class TaskController extends ListController<Task> {
      * @param ctx incoming router context
      */
     public async detail(ctx: Router.IRouterContext) {
-        const state = ctx.state.user as JWTState;
+        const state = ctx.state.user as IJWTState;
         const task = await Task.query()
             .select("id", "title", "text", "completed", "completedAt")
             .where("id", "=", ctx.params.id)
@@ -41,33 +41,33 @@ export default class TaskController extends ListController<Task> {
         }
 
         ctx.body = {
-            data: task
+            data: task,
         };
     }
 
     public async create(ctx: Router.IRouterContext) {
-        const state = ctx.state.user as JWTState;
-        const body = ctx.request.body as CreateTaskRequestBody;
+        const state = ctx.state.user as IJWTState;
+        const body = ctx.request.body as ICreateTaskRequestBody;
 
         const insertedGraph = await transaction(Task.knex(), trx => {
             const insert = {
+                createdAt: new Date(),
                 user_id: state.id,
                 // TODO: utc date here
-                createdAt: new Date(),
-                ...body
+                ...body,
             };
             return Task.query(trx).insertGraph(insert);
         });
 
         ctx.status = 201;
         ctx.body = {
-            data: insertedGraph
+            data: insertedGraph,
         };
     }
 
     public async update(ctx: Router.IRouterContext) {
-        const state = ctx.state.user as JWTState;
-        const body = ctx.request.body as UpdateTaskRequestBody;
+        const state = ctx.state.user as IJWTState;
+        const body = ctx.request.body as IUpdateTaskRequestBody;
 
         if (ctx.params.id !== body.id) {
             // TODO: raise exception
@@ -84,12 +84,12 @@ export default class TaskController extends ListController<Task> {
             .returning(["id", "title", "text", "completed", "completedAt"]);
 
         ctx.body = {
-            data: task
+            data: task,
         };
     }
 
     public async delete(ctx: Router.IRouterContext) {
-        const state = ctx.state.user as JWTState;
+        const state = ctx.state.user as IJWTState;
         await Task.query()
             .where("id", "=", ctx.params.id)
             .where("user_id", "=", state.id)
@@ -97,7 +97,7 @@ export default class TaskController extends ListController<Task> {
             .delete();
 
         ctx.body = {
-            message: "Task has been deleted."
+            message: "Task has been deleted.",
         };
     }
 }

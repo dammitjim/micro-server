@@ -1,11 +1,10 @@
 import { Model } from "objection";
 
 export default class User extends Model {
-    readonly id!: number;
-    username!: string;
-    password!: string;
-    createdAt!: Date;
-    lastLoggedIn?: Date;
-
-    static tableName = "users";
+    public static tableName = "users";
+    public readonly id!: number;
+    public username!: string;
+    public password!: string;
+    public createdAt!: Date;
+    public lastLoggedIn?: Date;
 }

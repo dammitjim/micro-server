@@ -6,7 +6,7 @@ import { initUsersRoutes } from "./users/routes";
 
 export function init(server: Koa) {
     const v1Router = new Router({
-        prefix: "/api/v1"
+        prefix: "/api/v1",
     });
 
     v1Router.use(initTaskRoutes(server).routes());

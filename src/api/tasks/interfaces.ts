@@ -1,9 +1,9 @@
-export interface CreateTaskRequestBody {
+export interface ICreateTaskRequestBody {
     title: string;
     text: string;
     completed: boolean;
 }
 
-export interface UpdateTaskRequestBody extends CreateTaskRequestBody {
+export interface IUpdateTaskRequestBody extends ICreateTaskRequestBody {
     id: number;
 }
